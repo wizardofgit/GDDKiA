@@ -4,3 +4,4 @@ Wykorzystujemy model agentowy samochodów.
 Wykorzystane źródła:
 https://towardsdatascience.com/simulating-traffic-flow-in-python-ee1eab4dd20f
 https://towardsdatascience.com/traffic-intersection-simulation-using-pygame-689d6bd7687a
+https://www.youtube.com/watch?v=AY9MnQ4x3zk&ab_channel=ClearCode
