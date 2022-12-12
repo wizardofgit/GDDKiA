@@ -29,6 +29,8 @@ def generate_traffic(): #randomly generates a car
     cars.append(car.Car(id, acceleration, length, direction, max_v, starting_position, dt, height, width))
     print(cars[id])
 
+generate_traffic()
+
 #create simple plain color road and car images
 road_horizontal = pygame.Surface((width, 20))
 road_horizontal.fill('White')
@@ -41,10 +43,12 @@ car_image_vertical.fill('Red')
 background = pygame.Surface((width,height))
 background.fill('Black')
 
+#initalizing pygame
 pygame.init()
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Symulacja skrzyżowania")
 clock = pygame.time.Clock()
+text = pygame.font.Font(None, 50)
 
 while True:
     for event in pygame.event.get():    #check what user did
@@ -52,17 +56,23 @@ while True:
             pygame.quit()
             print("Average car flow: ", cars_passed / time_elapsed)
             exit()  #stop the app
+    if len(cars) == 0:
+        pygame.quit()
+        print("Average car flow: ", cars_passed / time_elapsed)
+        exit()  # stop the app
 
     #update images on screen
     screen.blit(background, (0,0))
     screen.blit(road_horizontal, (0, height/2 - 5))
     screen.blit(road_vertical, (width/2 - 5, 0))
+    text_image = text.render(str(round(time_elapsed, 2)), True, 'White')
+    screen.blit(text_image, (0,0))
 
     #generates another car after certain in-simulation seconds elapsed
-    if time_elapsed > float(time_threshold):
-        generate_traffic()
-        current_free_car_id += 1
-        time_threshold += 2
+    # if time_elapsed > float(time_threshold):
+    #     generate_traffic()
+    #     current_free_car_id += 1
+    #     time_threshold += 2
 
     #update the parameters of every car on the road; display all the cars
     for car in cars:
