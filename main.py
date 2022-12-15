@@ -14,22 +14,36 @@ current_free_car_id = 0 #current car id that can be used to generate a new car
 cars_passed = 0 #how many cars has entered and cleared the junction
 time_elapsed = 0.0 #how much time has passed since the start of the simulation
 time_threshold = 0 #after certain threshold new cars will be generated
+time_threshold_step = 5 #time_threshold will be updated, so that cars are generated every time_threshold_step seconds
 
-def generate_traffic(): #randomly generates a car
+def generate_traffic(direction = None, start = None): #randomly generates a car
     id = current_free_car_id
     acceleration = random.randint(12, 18) * 0.5
     length = round(random.randint(40, 55) * 0.1, 1)
-    direction = ['ahead', 'left', 'ahead', 'ahead','right', 'ahead', 'ahead'][random.randint(0,6)]
+    if direction == None:
+        direction = ['ahead', 'left', 'ahead', 'ahead','right', 'ahead', 'ahead'][random.randint(0,6)]
     max_v = float(random.randint(90, 160))
-    selected_starting_point = random.randint(0, 3)
+    if start == None:
+        selected_starting_point = random.randint(0, 3)
+    else:
+        selected_starting_point = start
     starting_position = [list(starting_positions_cord.keys())[selected_starting_point],
                          starting_positions_cord[list(starting_positions_cord.keys())[selected_starting_point]]] #include list consisting of starting position and
                                                                                                                  #its coordinates
 
     cars.append(car.Car(id, acceleration, length, direction, max_v, starting_position, dt, height, width))
-    print(cars[id])
 
-generate_traffic()
+def show_car_info(id = None, start_printing = 1.00, step = 2.00): #prints info about all cars or car with certain id
+    if id is None:
+        for car in cars:
+            if time_elapsed - start_printing > 0:
+                print(car)
+        start_printing += step
+    else:
+        for car in cars:
+            if time_elapsed > 0 and car.id == id:
+                print(car)
+        start_printing += step
 
 #create simple plain color road and car images
 road_horizontal = pygame.Surface((width, 20))
@@ -42,6 +56,8 @@ car_image_vertical = pygame.Surface((10, 25))
 car_image_vertical.fill('Red')
 background = pygame.Surface((width,height))
 background.fill('Black')
+map_center = pygame.Surface((1, 1))
+map_center.fill('Blue')
 
 #initalizing pygame
 pygame.init()
@@ -50,19 +66,23 @@ pygame.display.set_caption("Symulacja skrzyżowania")
 clock = pygame.time.Clock()
 text = pygame.font.Font(None, 50)
 
+generate_traffic()
+generate_traffic()
+
 while True:
     for event in pygame.event.get():    #check what user did
         if event.type == pygame.QUIT:   #if user clicked 'x' (aka quit) in window
             pygame.quit()
             print("Average car flow: ", cars_passed / time_elapsed)
             exit()  #stop the app
-    if len(cars) == 0:
+    if len(cars) == 0 and time_elapsed > 5:
         pygame.quit()
         print("Average car flow: ", cars_passed / time_elapsed)
         exit()  # stop the app
 
     #update images on screen
     screen.blit(background, (0,0))
+    screen.blit(map_center, (width/2, height/2))
     screen.blit(road_horizontal, (0, height/2 - 5))
     screen.blit(road_vertical, (width/2 - 5, 0))
     text_image = text.render(str(round(time_elapsed, 2)), True, 'White')
@@ -72,15 +92,24 @@ while True:
     # if time_elapsed > float(time_threshold):
     #     generate_traffic()
     #     current_free_car_id += 1
-    #     time_threshold += 2
+    #     time_threshold += time_threshold_step
 
     #update the parameters of every car on the road; display all the cars
-    for car in cars:
+    #show_car_info()
+    cars_to_be_deleted = []
+    show_car_info()
+    for i in range(len(cars)):
+        car = cars[i]
         car.update()
-        #print(car)
+
         if car.reached_destination:
             cars_passed += 1
-            del car
+            cars_to_be_deleted.append(car.id)
+
+    for car in cars:
+        if car.id in cars_to_be_deleted:
+            cars.remove(car)
+
 
     for car in cars:
         if car.car_orientation == 1:
@@ -90,4 +119,4 @@ while True:
 
     time_elapsed += dt
     pygame.display.update() #update the screen
-    clock.tick(120) #simulation should run at no more than said amount of ticks per second
+    clock.tick(180) #simulation should run at no more than said amount of ticks per second
