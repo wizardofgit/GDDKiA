@@ -1,6 +1,5 @@
 
 class TrafficLight:
-
     def __init__(self, light_id, position="horizontal", light_times_dict=None, status=None, countdown=0):
 
         self.id = light_id  # Used to identify which signaling device we are referring to
