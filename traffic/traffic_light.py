@@ -14,7 +14,7 @@ class TrafficLight:
 
         self.status = status  # Used in case we wish to manually enforce a certain starting light composition
 
-        self.countdown = countdown
+        self.countdown = countdown  # Used as a substite for the passage of time in simulation
 
     def return_status(self):  # Returns current light status
         return self.status
