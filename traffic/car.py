@@ -19,7 +19,7 @@ class Car:
 
     def __str__(self):
         return f"Car id={self.id} with acceleration {self.acceleration}, length {self.length} going {self.direction} going from {self.starting_position}.\n" \
-               f"Current position: {self.current_position} and velocity: {self.current_velocity}"
+               f"Current position: {self.current_position} and velocity: {self.current_velocity}. Orientation: {self.car_orientation}"
 
     def update_position(self):
         # updates position of the car depending on the direction, starting point and whether it has already crossed
@@ -62,7 +62,7 @@ class Car:
                     self.current_position[0] += self.current_velocity * self.dt
             elif self.starting_position == 'north':
                 if self.crossed_intersection == False:
-                    self.current_position[1] -= self.current_velocity * self.dt
+                    self.current_position[1] += self.current_velocity * self.dt
                 else:
                     self.current_position[0] -= self.current_velocity * self.dt
             elif self.starting_position == 'east':
@@ -77,22 +77,54 @@ class Car:
                     self.current_position[1] += self.current_velocity * self.dt
 
     def has_crossed_intersection(self):
+        x = 5 #temporary variable to fix visual bug where cars don't drive "on their lanes"
         if self.starting_position == 'north':
-            if self.current_position[1] >= self.height/2 + 5:
-                self.crossed_intersection = True
-                self.car_orientation *= -1
+            if self.direction == 'right':
+                if self.current_position[1] >= self.height/2 - x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+                elif self.direction == 'left':
+                    if self.current_position[1] >= self.height/2 + x:
+                        self.crossed_intersection = True
+                        if self.direction != 'ahead':
+                            self.car_orientation *= -1
+
         elif self.starting_position == 'south':
-            if self.current_position[1] <= self.height/2 + 5:
-                self.crossed_intersection = True
-                self.car_orientation *= -1
+            if self.direction == 'left':
+                if self.current_position[1] <= self.height/2 - x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+            elif self.direction == 'right':
+                if self.current_position[1] <= self.height/2 + x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+
         elif self.starting_position == 'east':
-            if self.current_position[0] <= self.width/2 - 5:
-                self.crossed_intersection = True
-                self.car_orientation *= -1
+            if self.direction == 'left':
+                if self.current_position[0] <= self.width / 2 - x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+            elif self.direction == 'right':
+                if self.current_position[0] <= self.width / 2 + x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+
         elif self.starting_position == 'west':
-            if self.current_position[0] >= self.width/2 - 5:
-                self.crossed_intersection = True
-                self.car_orientation *= -1
+            if self.direction == 'left':
+                if self.current_position[0] >= self.width / 2 + x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
+            elif self.direction == 'right':
+                if self.current_position[0] >= self.width / 2 - x:
+                    self.crossed_intersection = True
+                    if self.direction != 'ahead':
+                        self.car_orientation *= -1
 
     def has_reached_destination(self):
         #check if the car has reached its destination (drove out of the map)
@@ -152,6 +184,7 @@ class Car:
 
         #check if the car crossed intersection and update its position; additionally check if char reached its desti-
         #nation
-        self.has_crossed_intersection()
+        if not self.crossed_intersection:
+            self.has_crossed_intersection()
         self.update_position()
         self.has_reached_destination()
