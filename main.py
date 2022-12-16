@@ -1,3 +1,4 @@
+from traffic.traffic_light import *
 from traffic.car import Car
 import pygame
 import random
@@ -23,6 +24,12 @@ time_threshold = 0 #after certain threshold new cars will be generated
 time_threshold_step = 2 #time_threshold will be updated, so that cars are generated every time_threshold_step seconds
 minimum_cars_passed = 10 #number of cars which passed after which the simulation ends
 t, t_step = 0, 0.01 #variables controlling how often info is logged
+
+sig = create_signalisation()  # Creating 4 signaling devices and their coordinates
+light_cords = {'north': [width/2 - 30 , height/2 - 30],
+               'south': [width/2 + 15 , height/2 + 15],
+               'east': [width/2 + 15 , height/2 - 30],
+               'west': [width/2 - 30 , height/2 + 15]}
 
 def generate_traffic(direction = None, selected_starting_point = None): #randomly generates a car
     id = current_free_car_id
@@ -98,7 +105,13 @@ while True:
     screen.blit(text_image, (0,0))
     car_on_screen_text_image = car_on_screen_text.render(str(len(cars)), True, 'White')
     screen.blit(car_on_screen_text_image, (0,30))
-
+    
+    # Update lights
+    update_all_lights(sig)
+    current_lights_list = render_all_light(sig)
+    for signaling_device_and_cord in current_lights_list:
+        screen.blit(signaling_device_and_cord[0], light_cords[signaling_device_and_cord[1]])
+        
     #generates another car after certain in-simulation seconds elapsed
     if time_elapsed > time_threshold:
         generate_traffic()
