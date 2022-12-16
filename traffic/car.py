@@ -7,7 +7,7 @@ class Car:
         self.max_v = max_v #max velocity of the car
         self.current_velocity = max_v #current velocity of the vehicle
         self.starting_position = starting_position[0]
-        self.current_position = starting_position[1]
+        self.current_position = list(starting_position[1])
         self.dt = dt #step of the simulation
         self.height = height
         self.width = width
@@ -15,10 +15,11 @@ class Car:
         self.reached_destination = False #flag that determines if the car reached its destination
         self.car_orientation = 0
 
+        #check car orientation
         self.car_starting_orientation()
 
     def __str__(self):
-        return f"Car id={self.id} with acceleration {self.acceleration}, length {self.length} going {self.direction} going from {self.starting_position}.\n" \
+        return f"Car id={self.id} going {self.direction} from {self.starting_position}.\n" \
                f"Current position: {self.current_position} and velocity: {self.current_velocity}. Orientation: {self.car_orientation}"
 
     def update_position(self):
