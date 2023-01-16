@@ -41,12 +41,12 @@ class TrafficLight:
         self.countdown = self.light_times_dict[self.status]
         return self.status
 
-    def update(self):  # Updates the device with current time and changes it's state based upon it's passage.
+    def update(self):  # Updates the device with current time and changes its state based upon its passage.
         self.countdown = self.countdown - 1
         if self.countdown == 0:
             self.next()
 
-    def render(self):  # Returns it's state as a adequately coloured square in pygame friendly object.
+    def render(self):  # Returns its state as an adequately coloured square in pygame friendly object.
         signaling_device_image = pygame.Surface((25, 25))
         try:
             signaling_device_image.fill(self.status)
