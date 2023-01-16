@@ -35,7 +35,8 @@ def generate_traffic(direction = None, selected_starting_point = None): #randoml
     id = current_free_car_id
     acceleration = random.randint(20, 40) * 0.5
     #acceleration = 9
-    length = round(random.randint(40, 55) * 0.1, 1)
+    #length = round(random.randint(40, 60) * 0.1, 1)
+    length = 4.5
     if direction == None:
         direction = ['ahead', 'left', 'ahead','right', 'ahead', 'ahead'][random.randint(0,5)]
     max_v = float(random.randint(100, 160))
@@ -66,13 +67,13 @@ def distance(car_a, car_b, segment):
 
 def distance_to_light(car, light):
     if light == 'south':
-        return light_cords['south'][1] - car.current_position[1]
+        return abs(car.current_position[1] - light_cords['south'][1])
     elif light == 'north':
-        return light_cords['north'][1] - car.current_position[1]
+        return abs(light_cords['north'][1] - car.current_position[1])
     elif light == 'east':
-        return car.current_position[0] - light_cords['east'][0]
+        return abs(car.current_position[0] - light_cords['east'][0])
     else:
-        return light_cords['west'][0] - car.current_position[0]
+        return abs(light_cords['west'][0] - car.current_position[0])
 def sort_cars(l, p, r = False):    #sorts list l using parameter p: 0 for sorting by x-coordinate and 1 for y-coordinate
                                    # as well as parameter r that tells if the list is to be reversed or not
     l.sort(key = lambda x: x.current_position[p], reverse = r)
@@ -91,56 +92,71 @@ def check_car_distance():
     for key in car_queues.keys():
         car_list = car_queues[key]  #has car objects on selected road segment
 
-        if key in ['south_up', 'north_up']: #sorts car list according to the segment of the road
+        if key == 'south_up': #sorts car list according to the segment of the road
             car_list = sort_cars(car_list, 1)
-        elif key in ['south_down', 'north_down']:
+        elif key == 'north_down':
             car_list = sort_cars(car_list, 1, True)
-        elif key in ['west_right', 'east_right']:
+        elif key == 'south_down':
+            car_list = sort_cars(car_list, 1, True)
+        elif key == 'north_up':
+            car_list = sort_cars(car_list, 1)
+        elif key == 'west_right':
             car_list = sort_cars(car_list, 0, True)
-        else:
+        elif key == 'west_left':
+            car_list = sort_cars(car_list, 0,)
+        elif key == 'east_right':
+            car_list = sort_cars(car_list, 0, True)
+        elif key == 'east_left':
             car_list = sort_cars(car_list, 0)
 
-        for car_nr in range(len(car_list) - 1): #checks if the car is going to hit the car behind
-            if distance(car_list[car_nr], car_list[car_nr + 1], key) > (car_list[car_nr + 1].stopping_distance):
-                cars_to_stop.append(car_list[car_nr].id)
-            else:
-                cars_to_go.append(car_list[car_nr].id)
+        # if len(car_list) > 1:
+        #     for car_nr in range(len(car_list) - 1): #checks if the car is going to hit the car behind
+        #         if distance(car_list[car_nr], car_list[car_nr + 1], key) <= car_list[car_nr + 1].stopping_distance:
+        #             cars_to_stop.append(car_list[car_nr + 1].id)
+        #         else:
+        #             cars_to_go.append(car_list[car_nr + 1].id)
 
+        y = 15 #variable to fix stopping distance from light so they dont stop in the middle of the intersection or too soon
         if key in ['south_up', 'east_left', 'west_right', 'north_down'] and len(car_list) > 0:    #checks if the car can cross the intersection (checks lights)
             if key == 'south_up':
-                if sig[0].status == 'green' or distance_to_light(car_list[0], 'south') >= car_list[0].stopping_distance:
+                if sig[0].status == 'green' or car_list[0].current_position[1] - car_list[0].stopping_distance >= light_cords['south'][1] - y:
                     cars_to_go.append(car_list[0].id)
-                elif sig[0].status == 'yellow_to_red' and distance_to_light(car_list[0], 'south') <= car_list[0].stopping_distance:
+                elif sig[0].status == 'yellow_to_red' and car_list[0].current_position[1] - car_list[0].stopping_distance <= light_cords['south'][1] - y:
                     cars_to_go.append(car_list[0].id)
                 else:
                     cars_to_stop.append(car_list[0].id)
             elif key == 'north_down':
-                if sig[2].status == 'green' or distance_to_light(car_list[0], 'north') >= car_list[0].stopping_distance:
+                if sig[2].status == 'green' or car_list[0].current_position[1] + car_list[0].stopping_distance <= light_cords['north'][1] + y:
                     cars_to_go.append(car_list[0].id)
-                elif sig[2].status == 'yellow_to_red' and distance_to_light(car_list[0], 'north') <= car_list[0].stopping_distance:
+                elif sig[2].status == 'yellow_to_red' and car_list[0].current_position[1] + car_list[0].stopping_distance >= light_cords['north'][1] + y:
                     cars_to_go.append(car_list[0].id)
                 else:
                     cars_to_stop.append(car_list[0].id)
             elif key == 'east_left':
-                if sig[1].status == 'green' or distance_to_light(car_list[0], 'east') >= car_list[0].stopping_distance:
+                if sig[1].status == 'green' or car_list[0].current_position[0] - car_list[0].stopping_distance >= light_cords['east'][0] - y:
                     cars_to_go.append(car_list[0].id)
-                elif sig[1].status == 'yellow_to_red' and distance_to_light(car_list[0], 'east') <= car_list[0].stopping_distance:
+                elif sig[1].status == 'yellow_to_red' and car_list[0].current_position[0] - car_list[0].stopping_distance <= light_cords['east'][0] - y:
                     cars_to_go.append(car_list[0].id)
                 else:
                     cars_to_stop.append(car_list[0].id)
             elif key == 'west_right':
-                if sig[3].status == 'green' or distance_to_light(car_list[0], 'west') >= car_list[0].stopping_distance:
+                if sig[3].status == 'green' or car_list[0].current_position[0] + car_list[0].stopping_distance <= light_cords['west'][0] + y:
                     cars_to_go.append(car_list[0].id)
-                elif sig[3].status == 'yellow_to_red' and distance_to_light(car_list[0], 'west') <= car_list[0].stopping_distance:
+                elif sig[3].status == 'yellow_to_red' and car_list[0].current_position[0] + car_list[0].stopping_distance >= light_cords['west'][0] + y:
                     cars_to_go.append(car_list[0].id)
                 else:
                     cars_to_stop.append(car_list[0].id)
+        elif len(car_list) > 0:
+            cars_to_go.append(car_list[0].id)
+
+    for key in car_queues.keys():
+        print(f"{key} {list(map(lambda x: x.id, car_queues[key]))}")
 
     for car in cars:
-        if car.id in cars_to_stop:
-            car.instruction = 'stop'
-        elif car.id in cars_to_go:
+        if car.id in cars_to_go:
             car.instruction = 'go'
+        elif car.id in cars_to_stop:
+            car.instruction = 'stop'
 
 #create simple plain color road and car images
 road_horizontal = pygame.Surface((width, 20))
