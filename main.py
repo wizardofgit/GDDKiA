@@ -22,7 +22,7 @@ cars_passed = 0 #how many cars has entered and cleared the junction
 time_elapsed = 0.0 #how much time has passed since the start of the simulation
 time_threshold = 0 #after certain threshold new cars will be generated
 time_threshold_step = 2 #time_threshold will be updated, so that cars are generated every time_threshold_step seconds
-minimum_cars_passed = 10 #number of cars which passed after which the simulation ends
+minimum_cars_passed = 100 #number of cars which passed after which the simulation ends
 t, t_step = 0, 0.01 #variables controlling how often info is logged
 
 sig = create_signalisation()  # Creating 4 signaling devices and their coordinates
@@ -58,12 +58,6 @@ def show_car_info(): #prints info about all cars or car with certain id
             status_log['car_' + str(car.id)].append(car.__str__())
         print(car)
     print('')
-
-def distance(car_a, car_b, segment):
-    if segment in ['west_left, west_right, east_right, east_left']:
-        return abs(car_b.current_position[0] - car_a.current_position[0])
-    else:
-        return abs(car_b.current_position[1] - car_a.current_position[1])
 
 def distance_to_light(car, light):
     if light == 'south':
@@ -109,14 +103,14 @@ def check_car_distance():
         elif key == 'east_left':
             car_list = sort_cars(car_list, 0)
 
-        # if len(car_list) > 1:
-        #     for car_nr in range(len(car_list) - 1): #checks if the car is going to hit the car behind
-        #         if distance(car_list[car_nr], car_list[car_nr + 1], key) <= car_list[car_nr + 1].stopping_distance:
-        #             cars_to_stop.append(car_list[car_nr + 1].id)
-        #         else:
-        #             cars_to_go.append(car_list[car_nr + 1].id)
+        y = 15  # variable to fix stopping distance from light so they dont stop in the middle of the intersection or too soon
+        if len(car_list) > 1:
+            for car_nr in range(len(car_list) - 1): #checks if the car is going to hit the car behind
+                if math.sqrt((car_list[car_nr].current_position[0] - car_list[car_nr + 1].current_position[0])**2 + (car_list[car_nr].current_position[1] - car_list[car_nr + 1].current_position[1])**2) <= car_list[car_nr + 1].stopping_distance + y:
+                    cars_to_stop.append(car_list[car_nr + 1].id)
+                else:
+                    cars_to_go.append(car_list[car_nr + 1].id)
 
-        y = 15 #variable to fix stopping distance from light so they dont stop in the middle of the intersection or too soon
         if key in ['south_up', 'east_left', 'west_right', 'north_down'] and len(car_list) > 0:    #checks if the car can cross the intersection (checks lights)
             if key == 'south_up':
                 if sig[0].status == 'green' or car_list[0].current_position[1] - car_list[0].stopping_distance >= light_cords['south'][1] - y:
@@ -184,6 +178,7 @@ clock = pygame.time.Clock()
 text = pygame.font.Font(None, 50)
 car_id_text = pygame.font.Font(None, 20)
 car_on_screen_text = pygame.font.Font(None, 50)
+cars_passed_text = pygame.font.Font(None, 50)
 
 while True:
     for event in pygame.event.get():    #check what user did
@@ -205,6 +200,8 @@ while True:
     screen.blit(text_image, (0,0))
     car_on_screen_text_image = car_on_screen_text.render(str(len(cars)), True, 'White')
     screen.blit(car_on_screen_text_image, (0,30))
+    cars_passed_test_image = cars_passed_text.render(str(cars_passed), True, 'White')
+    screen.blit(cars_passed_test_image, (0, 60))
     
     # Update lights
     update_all_lights(sig)
