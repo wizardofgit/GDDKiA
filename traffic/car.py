@@ -1,5 +1,5 @@
 class Car:
-    def __init__(self, id, acceleration, length, direction, max_v, starting_position, dt, height, width):
+    def __init__(self, id, acceleration, length, direction, max_v, starting_position, dt, height, width, queue):
         self.id = id #car id
         self.acceleration = acceleration #acceleration in units/s
         self.length = length #length of car in m
@@ -18,6 +18,7 @@ class Car:
         self.instruction = 'go'
         self.stopping_rate = 1.5 #how much faster the car can stop in contrary to accelerate
         self.stopping_distance = 1.1*(self.length + self.stopping_rate*self.acceleration/self.max_v + 15)
+        self.queue = queue  # In which segment of the road the car starts.
 
         #check car orientation
         self.car_starting_orientation()
@@ -26,6 +27,15 @@ class Car:
         return f"Car id={self.id} going {self.direction} from {self.starting_position}.\n" \
                f"Current position: {self.current_position}, road: {self.road_segment} and velocity: {self.current_velocity}. Orientation: {self.car_orientation}." \
                f"Instruction: {self.instruction}. Stopping distance: {self.stopping_distance}"
+
+    def return_queue(self):
+        if self.has_crossed_intersection() is True:
+            return None
+        else:
+            return self.queue
+
+    def return_id(self):
+        return self.id
 
     def update_position(self):
         # updates position of the car depending on the direction, starting point and whether it has already crossed

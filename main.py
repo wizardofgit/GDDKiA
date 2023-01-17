@@ -15,14 +15,16 @@ car_queues = {'east_right': [], 'east_left': [],
               'west_right': [], 'west_left': [],
               'south_down': [], 'south_up': [],
               'north_down': [], 'north_up': []} #contains the cars that are in a certain segment of the road
+optimization_auxiliary_queue = {"north": [], "south": [], "west": [], "east": []}
 status_log = {} #status of all vehicles
 cars = [] #list of existing cars (i.e. being displayed)
 current_free_car_id = 0 #current car id that can be used to generate a new car
 cars_passed = 0 #how many cars has entered and cleared the junction
 time_elapsed = 0.0 #how much time has passed since the start of the simulation
 time_threshold = 0 #after certain threshold new cars will be generated
-time_threshold_step = 2 #time_threshold will be updated, so that cars are generated every time_threshold_step seconds
+time_threshold_step = 1 #time_threshold will be updated, so that cars are generated every time_threshold_step seconds
 minimum_cars_passed = 100 #number of cars which passed after which the simulation ends
+optimization_interval = 2  # Amount of esconds between optimizer scans
 t, t_step = 0, 0.01 #variables controlling how often info is logged
 
 sig = create_signalisation()  # Creating 4 signaling devices and their coordinates
@@ -30,6 +32,31 @@ light_cords = {'north': [width/2 - 30 , height/2 - 30],
                'south': [width/2 + 15 , height/2 + 15],
                'east': [width/2 + 15 , height/2 - 30],
                'west': [width/2 - 30 , height/2 + 15]}
+
+
+def update_auxiliary_queues(cars, list_of_queues):
+    for queue in list_of_queues:
+        list_of_queues[queue] = []
+    for vehicle in cars:
+        car_id = vehicle.return_id()
+        queue_id = vehicle.return_queue()
+        if queue_id in list_of_queues:
+            list_of_queues[str(queue_id)].append(car_id)
+    current_totals = {}
+    for queue in list_of_queues:
+        current_totals[queue] = len(list_of_queues[queue])
+    return current_totals
+
+def light_optimization_routine(cars, car_queues):  #  Whenever southern light does full rotation lights calibrate themselves.
+    current = update_auxiliary_queues(cars, car_queues)
+    print(car_queues)
+    print(current)
+    solution = optimize(current)
+    print(solution)
+    substitute(solution, sig)
+    for device in sig:
+        print(device.return_id(), device.return_light_times())
+
 
 def generate_traffic(direction = None, selected_starting_point = None): #randomly generates a car
     id = current_free_car_id
@@ -44,9 +71,10 @@ def generate_traffic(direction = None, selected_starting_point = None): #randoml
     if selected_starting_point == None:
         selected_starting_point = list(starting_positions_cord.keys())[random.randint(0, 3)]
     starting_position = [selected_starting_point, starting_positions_cord[selected_starting_point]] #include list consisting of starting position and its coordinates
-    print(starting_positions_cord)
-    print(starting_position)
-    cars.append(Car(id, acceleration, length, direction, max_v, starting_position, dt, height, width))
+    # print(starting_positions_cord)
+    # print(starting_position)
+    cars.append(Car(id, acceleration, length, direction, max_v, starting_position, dt, height, width, queue=str(selected_starting_point)))
+
 
 def show_car_info(): #prints info about all cars or car with certain id
     print("Time elapsed: ", time_elapsed)
@@ -143,14 +171,16 @@ def check_car_distance():
         elif len(car_list) > 0:
             cars_to_go.append(car_list[0].id)
 
-    for key in car_queues.keys():
-        print(f"{key} {list(map(lambda x: x.id, car_queues[key]))}")
+    # for key in car_queues.keys():
+    #     print(f"{key} {list(map(lambda x: x.id, car_queues[key]))}")
 
     for car in cars:
         if car.id in cars_to_go:
             car.instruction = 'go'
         elif car.id in cars_to_stop:
             car.instruction = 'stop'
+
+
 
 #create simple plain color road and car images
 road_horizontal = pygame.Surface((width, 20))
@@ -208,6 +238,8 @@ while True:
     current_lights_list = render_all_light(sig)
     for signaling_device_and_cord in current_lights_list:
         screen.blit(signaling_device_and_cord[0], light_cords[signaling_device_and_cord[1]])
+    if (round(time_elapsed, 1) % optimization_interval)  == 0:
+        light_optimization_routine(cars, optimization_auxiliary_queue)
         
     #generates another car after certain in-simulation seconds elapsed
     if time_elapsed > time_threshold:
@@ -217,7 +249,7 @@ while True:
 
     if time_elapsed > t:
         t += t_step
-        show_car_info()
+        # show_car_info()
 
     # update the parameters of every car on the road; check if cars are to be deleted
     cars_to_be_deleted = []
